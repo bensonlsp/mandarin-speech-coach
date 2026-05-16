@@ -3,10 +3,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TTSStatus } from '@/lib/types';
 
+// Safari detection (excludes Chrome which also has "Safari" in UA)
+function isSafari(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  return /^((?!chrome|android).)*safari/i.test(ua);
+}
+
 function isLikelyMandarin(v: SpeechSynthesisVoice): boolean {
   const lang = v.lang.toLowerCase();
   const name = v.name.toLowerCase();
-  // Exclude Cantonese
   if (lang === 'zh-hk' || lang.includes('hant-hk')) return false;
   if (name.includes('sin-ji') || name.includes('cantonese')) return false;
   return true;
@@ -15,7 +21,6 @@ function isLikelyMandarin(v: SpeechSynthesisVoice): boolean {
 function pickDefaultMandarin(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
   const mandarin = voices.filter(isLikelyMandarin);
   return (
-    // Prefer Google zh-CN (most reliable in Chrome)
     mandarin.find(v => v.lang === 'zh-CN' && v.name.toLowerCase().includes('google')) ??
     mandarin.find(v => v.lang === 'zh-CN') ??
     mandarin.find(v => v.lang === 'zh-TW' && v.name.toLowerCase().includes('google')) ??
@@ -25,20 +30,33 @@ function pickDefaultMandarin(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoi
   );
 }
 
+// Safari lists voices that are NOT installed — detect by checking if local=true
+// or if the voice is likely a real installed voice (heuristic)
+function isInstalledVoice(v: SpeechSynthesisVoice): boolean {
+  // On Safari, uninstalled voices have localService=false
+  // On Chrome all Google voices have localService=false but still work
+  if (isSafari()) return v.localService === true;
+  return true;
+}
+
 export function useTTS() {
   const [status, setStatus] = useState<TTSStatus>('idle');
   const [zhVoices, setZhVoices] = useState<SpeechSynthesisVoice[]>([]);
-  // User-selected voice URI; null = auto-pick
   const [selectedURI, setSelectedURI] = useState<string | null>(null);
   const keepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const safari = useRef(false);
+
+  useEffect(() => {
+    safari.current = isSafari();
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
 
     const loadVoices = () => {
       const all = window.speechSynthesis.getVoices();
-      // Show all zh-* voices in the picker (don't filter Cantonese out here — user sees all)
-      setZhVoices(all.filter(v => v.lang.startsWith('zh')));
+      const zh = all.filter(v => v.lang.startsWith('zh'));
+      setZhVoices(zh);
     };
 
     loadVoices();
@@ -50,8 +68,20 @@ export function useTTS() {
     if (selectedURI) {
       return zhVoices.find(v => v.voiceURI === selectedURI) ?? null;
     }
-    return pickDefaultMandarin(zhVoices);
+    // On Safari prefer installed voices to avoid silent fallback to Cantonese
+    const candidates = safari.current
+      ? zhVoices.filter(isInstalledVoice)
+      : zhVoices;
+    return pickDefaultMandarin(candidates.length > 0 ? candidates : zhVoices);
   }, [zhVoices, selectedURI]);
+
+  // True if active voice is likely uninstalled on Safari (will fall back to Cantonese)
+  const activeVoiceUninstalled = useCallback((): boolean => {
+    if (!safari.current) return false;
+    const v = getActiveVoice();
+    if (!v) return false;
+    return !v.localService;
+  }, [getActiveVoice]);
 
   const clearKeepAlive = useCallback(() => {
     if (keepAliveRef.current) {
@@ -67,15 +97,29 @@ export function useTTS() {
     clearKeepAlive();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'zh-CN';
     utterance.rate = rate;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
 
     const voice = getActiveVoice();
-    if (voice) {
-      utterance.voice = voice;
-      utterance.lang = voice.lang; // match lang to voice to avoid override
+
+    if (safari.current) {
+      // Safari: only set voice if it's a locally installed one;
+      // otherwise just set lang and let macOS pick — setting an
+      // uninstalled voice causes silent Cantonese fallback
+      if (voice && voice.localService) {
+        utterance.voice = voice;
+        utterance.lang = voice.lang;
+      } else {
+        utterance.lang = 'zh-CN';
+      }
+    } else {
+      if (voice) {
+        utterance.voice = voice;
+        utterance.lang = voice.lang;
+      } else {
+        utterance.lang = 'zh-CN';
+      }
     }
 
     utterance.onstart = () => setStatus('speaking');
@@ -85,7 +129,6 @@ export function useTTS() {
     synth.speak(utterance);
     setStatus('speaking');
 
-    // Chrome bug: speechSynthesis pauses after ~15s
     keepAliveRef.current = setInterval(() => {
       if (synth.speaking) { synth.pause(); synth.resume(); }
       else clearKeepAlive();
@@ -110,5 +153,7 @@ export function useTTS() {
     activeVoice,
     selectedURI,
     setSelectedURI,
+    isSafariBrowser: safari.current,
+    activeVoiceUninstalled: activeVoiceUninstalled(),
   };
 }

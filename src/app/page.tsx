@@ -37,6 +37,8 @@ export default function Home() {
     activeVoice,
     selectedURI,
     setSelectedURI,
+    isSafariBrowser,
+    activeVoiceUninstalled,
   } = useTTS();
   const timer = useTimer();
 
@@ -101,6 +103,8 @@ export default function Home() {
               zhVoices={zhVoices}
               activeVoice={activeVoice}
               selectedURI={selectedURI}
+              isSafariBrowser={isSafariBrowser}
+              activeVoiceUninstalled={activeVoiceUninstalled}
               onPlaySelected={handlePlaySelected}
               onPlayAll={handlePlayAll}
               onStop={stop}
