@@ -1,0 +1,20 @@
+# dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# build
+.standalone/
+
+# env
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+
+# debug
+npm-debug.log*
