@@ -15,7 +15,10 @@ function isLikelyMandarin(v: SpeechSynthesisVoice): boolean {
 function pickDefaultMandarin(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
   const mandarin = voices.filter(isLikelyMandarin);
   return (
+    // Prefer Google zh-CN (most reliable in Chrome)
+    mandarin.find(v => v.lang === 'zh-CN' && v.name.toLowerCase().includes('google')) ??
     mandarin.find(v => v.lang === 'zh-CN') ??
+    mandarin.find(v => v.lang === 'zh-TW' && v.name.toLowerCase().includes('google')) ??
     mandarin.find(v => v.lang === 'zh-TW') ??
     mandarin[0] ??
     null

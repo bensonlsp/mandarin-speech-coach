@@ -96,15 +96,16 @@ export function ControlBar({
           )}
           <div className="relative flex items-center">
             <select
-              value={selectedURI ?? activeVoice?.voiceURI ?? ''}
+              value={activeVoice?.voiceURI ?? ''}
               onChange={e => onVoiceChange(e.target.value)}
-              className="appearance-none bg-white/8 border border-white/15 text-white text-xs
+              style={{ colorScheme: 'dark' }}
+              className="appearance-none bg-slate-700 border border-slate-500 text-white text-xs
                          rounded-lg pl-2 pr-6 py-1.5 cursor-pointer focus:outline-none
-                         focus:ring-1 focus:ring-blue-500/60 transition-all"
+                         focus:ring-1 focus:ring-blue-500/60 transition-all min-w-[180px]"
               aria-label="選擇語音"
             >
               {zhVoices.length === 0 && (
-                <option value="">載入中…</option>
+                <option value="">載入語音中…</option>
               )}
               {zhVoices.map(v => (
                 <option key={v.voiceURI} value={v.voiceURI}>
