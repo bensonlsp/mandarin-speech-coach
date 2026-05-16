@@ -30,16 +30,7 @@ export default function Home() {
     clearSelection,
   } = useSelection(processedText);
 
-  const {
-    speak, stop,
-    status: ttsStatus,
-    zhVoices,
-    activeVoice,
-    selectedURI,
-    setSelectedURI,
-    isSafariBrowser,
-    activeVoiceUninstalled,
-  } = useTTS();
+  const { speak, stop, status: ttsStatus } = useTTS();
   const timer = useTimer();
 
   const getSelectedText = useCallback(() => {
@@ -100,17 +91,11 @@ export default function Home() {
               hasSelection={selectedIndices.size > 0}
               ttsStatus={ttsStatus}
               speechRate={speechRate}
-              zhVoices={zhVoices}
-              activeVoice={activeVoice}
-              selectedURI={selectedURI}
-              isSafariBrowser={isSafariBrowser}
-              activeVoiceUninstalled={activeVoiceUninstalled}
               onPlaySelected={handlePlaySelected}
               onPlayAll={handlePlayAll}
               onStop={stop}
               onClearSelection={clearSelection}
               onRateChange={setSpeechRate}
-              onVoiceChange={setSelectedURI}
             />
           </div>
 
