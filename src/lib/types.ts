@@ -30,18 +30,5 @@ export interface ProcessedParagraph {
 
 export type ProcessedText = ProcessedParagraph[];
 
-export interface CharAlignment {
-  char: string;
-  status: 'correct' | 'missed' | 'extra';
-}
-
-export interface ComparisonResult {
-  accuracy: number;
-  alignment: CharAlignment[];
-  expectedText: string;
-  recognizedText: string;
-}
-
 export type TTSStatus = 'idle' | 'loading' | 'speaking' | 'paused' | 'error';
-export type RecordingStatus = 'idle' | 'recording' | 'processing' | 'done' | 'error';
 export type TimerStatus = 'idle' | 'running' | 'paused';

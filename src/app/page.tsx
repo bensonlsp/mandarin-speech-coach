@@ -1,18 +1,20 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { TextInput } from '@/components/TextInput';
 import { TextDisplay } from '@/components/TextDisplay';
 import { ControlBar } from '@/components/ControlBar';
-import { SpeechTimer } from '@/components/SpeechTimer';
-import { PronunciationChecker } from '@/components/PronunciationChecker';
+import { PrintView, exportPdf } from '@/components/PrintView';
 import { ToneLegend } from '@/components/ToneLegend';
 import { usePinyin } from '@/hooks/usePinyin';
 import { useSelection } from '@/hooks/useSelection';
 import { useTTS } from '@/hooks/useTTS';
 import { useTimer } from '@/hooks/useTimer';
 import { buildTextFromIndices, flattenChars } from '@/lib/pinyinProcessor';
+import { exportMp3 } from '@/lib/exportMp3';
+
+const APP_NAME = '普通話演講教練';
 
 export default function Home() {
   const { processedText, isProcessing, process, reset } = usePinyin();
@@ -54,6 +56,17 @@ export default function Home() {
     if (text) speak(text, speechRate);
   };
 
+  const handleExportMp3 = async () => {
+    const text = selectedIndices.size > 0 ? getSelectedText() : getAllText();
+    if (!text) return;
+    try {
+      await exportMp3(text, speechRate);
+    } catch (err) {
+      console.error('[MP3 export]', err);
+      alert('匯出 MP3 失敗，請稍後再試。');
+    }
+  };
+
   const handleReset = () => {
     reset();
     clearSelection();
@@ -65,7 +78,7 @@ export default function Home() {
     <main className="min-h-screen p-4 md:p-8 max-w-6xl mx-auto">
       {/* Header */}
       <header className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-1">普通話演講教練</h1>
+        <h1 className="text-3xl font-bold text-white mb-1">{APP_NAME}</h1>
         <p className="text-slate-400 text-sm mb-4">
           輸入演講稿，生成拼音音調標注，練習發音
         </p>
@@ -96,6 +109,13 @@ export default function Home() {
               onStop={stop}
               onClearSelection={clearSelection}
               onRateChange={setSpeechRate}
+              timerDisplay={timer.display}
+              timerStatus={timer.status}
+              onTimerStart={timer.start}
+              onTimerPause={timer.pause}
+              onTimerReset={timer.reset}
+              onExportMp3={handleExportMp3}
+              onExportPdf={exportPdf}
             />
           </div>
 
@@ -136,24 +156,8 @@ export default function Home() {
         </GlassCard>
       )}
 
-      {/* Bottom Grid: Timer + Pronunciation Checker */}
-      {processedText && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <GlassCard className="p-6">
-            <SpeechTimer
-              display={timer.display}
-              status={timer.status}
-              onStart={timer.start}
-              onPause={timer.pause}
-              onReset={timer.reset}
-            />
-          </GlassCard>
-
-          <GlassCard className="p-6">
-            <PronunciationChecker targetText={getSelectedText()} />
-          </GlassCard>
-        </div>
-      )}
+      {/* Hidden print view for PDF export */}
+      <PrintView processedText={processedText} appName={APP_NAME} />
     </main>
   );
 }
