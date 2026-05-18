@@ -1,7 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { ProcessedText } from '@/lib/types';
+import type { ProcessedText, Tone } from '@/lib/types';
+
+// Darker tone palette tuned for print on white paper
+const TONE_PRINT_HEX: Record<Tone, string> = {
+  0: '#475569',
+  1: '#1d4ed8',
+  2: '#15803d',
+  3: '#b45309',
+  4: '#b91c1c',
+  5: '#64748b',
+};
 
 interface PrintViewProps {
   processedText: ProcessedText | null;
@@ -33,15 +43,22 @@ export function PrintView({ processedText, appName }: PrintViewProps) {
       <div className="print-body">
         {processedText.map(para => (
           <div className="print-paragraph" key={para.paraIdx}>
-            {para.sentences.flatMap(sent => sent.chars).map(c => (
-              <span
-                className={`print-char-block${c.isChinese ? '' : ' print-char-block-punc'}`}
-                key={c.globalIndex}
-              >
-                <span className="print-pinyin">{c.isChinese ? c.pinyin : ' '}</span>
-                <span className="print-char">{c.char}</span>
-              </span>
-            ))}
+            {para.sentences.flatMap(sent => sent.chars).map(c => {
+              const colorStyle = c.isChinese ? { color: TONE_PRINT_HEX[c.tone] } : undefined;
+              return (
+                <span
+                  className={`print-char-block${c.isChinese ? '' : ' print-char-block-punc'}`}
+                  key={c.globalIndex}
+                >
+                  <span className="print-pinyin" style={colorStyle}>
+                    {c.isChinese ? c.pinyin : ' '}
+                  </span>
+                  <span className="print-char" style={colorStyle}>
+                    {c.char}
+                  </span>
+                </span>
+              );
+            })}
           </div>
         ))}
       </div>
