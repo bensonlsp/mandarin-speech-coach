@@ -5,6 +5,43 @@ import { NextRequest } from 'next/server';
 // zh-CN-XiaoxiaoNeural: natural female Mandarin (China)
 const VOICE = 'zh-CN-XiaoxiaoNeural';
 
+// Extra pause (ms) inserted AFTER each punctuation, on top of the natural
+// pause Edge TTS already produces. Tuned for speech-practice cadence.
+const EXTRA_PAUSE_MS: Record<string, number> = {
+  '，': 250,
+  '、': 150,
+  '；': 350,
+  '：': 300,
+  '。': 500,
+  '！': 500,
+  '？': 500,
+  '…': 700,
+  ',': 250,
+  ';': 350,
+  ':': 300,
+  '.': 500,
+  '!': 500,
+  '?': 500,
+};
+
+function xmlEscape(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function textToSSMLInner(text: string): string {
+  let out = '';
+  for (const ch of text) {
+    out += xmlEscape(ch);
+    const pause = EXTRA_PAUSE_MS[ch];
+    if (pause) out += `<break time="${pause}ms"/>`;
+  }
+  return out;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { text, rate = 0 } = await req.json() as { text: string; rate?: number };
@@ -19,8 +56,11 @@ export async function POST(req: NextRequest) {
     const tts = new MsEdgeTTS();
     await tts.setMetadata(VOICE, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
 
-    // toStream returns { audioStream: Readable, metadataStream: Readable | null }
-    const { audioStream } = tts.toStream(text, { rate: rateStr });
+    // Wrap with <break> tags after punctuation; the library's SSML template
+    // interpolates the input verbatim into <prosody>...</prosody>.
+    const ssmlInput = textToSSMLInner(text);
+
+    const { audioStream } = tts.toStream(ssmlInput, { rate: rateStr });
 
     const chunks: Buffer[] = [];
     await new Promise<void>((resolve, reject) => {
