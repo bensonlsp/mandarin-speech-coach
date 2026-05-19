@@ -8,20 +8,20 @@ const VOICE = 'zh-CN-XiaoxiaoNeural';
 // Extra pause (ms) inserted AFTER each punctuation, on top of the natural
 // pause Edge TTS already produces. Tuned for speech-practice cadence.
 const EXTRA_PAUSE_MS: Record<string, number> = {
-  '，': 250,
-  '、': 150,
-  '；': 350,
-  '：': 300,
-  '。': 500,
-  '！': 500,
-  '？': 500,
-  '…': 700,
-  ',': 250,
-  ';': 350,
-  ':': 300,
-  '.': 500,
-  '!': 500,
-  '?': 500,
+  '，': 300,
+  '、': 200,
+  '；': 400,
+  '：': 350,
+  '。': 550,
+  '！': 550,
+  '？': 550,
+  '…': 750,
+  ',': 300,
+  ';': 400,
+  ':': 350,
+  '.': 550,
+  '!': 550,
+  '?': 550,
 };
 
 function xmlEscape(s: string): string {
