@@ -69,5 +69,16 @@ export function PrintView({ processedText }: PrintViewProps) {
 }
 
 export function exportPdf() {
+  // Temporarily clear the document title so Chrome's browser-injected
+  // print header (top-right) doesn't show the app name. The other
+  // browser-injected items (date, URL, page number) can only be hidden
+  // by the user unchecking "Headers and footers" in the print dialog.
+  const original = document.title;
+  document.title = ' ';
+  const restore = () => {
+    document.title = original;
+    window.removeEventListener('afterprint', restore);
+  };
+  window.addEventListener('afterprint', restore);
   window.print();
 }
