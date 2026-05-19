@@ -134,8 +134,10 @@ export function buildTextFromIndices(
   selectedIndices: Set<number>
 ): string {
   const all = flattenChars(processedText);
+  // Keep punctuation in the output so the TTS engine produces natural
+  // sentence-level pauses; filtering to isChinese would strip them.
   return all
-    .filter(c => selectedIndices.has(c.globalIndex) && c.isChinese)
+    .filter(c => selectedIndices.has(c.globalIndex))
     .map(c => c.char)
     .join('');
 }

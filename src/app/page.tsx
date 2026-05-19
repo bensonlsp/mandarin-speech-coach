@@ -43,7 +43,8 @@ export default function Home() {
   const getAllText = useCallback(() => {
     if (!processedText) return '';
     const all = flattenChars(processedText);
-    return all.filter(c => c.isChinese).map(c => c.char).join('');
+    // Keep punctuation so the TTS engine pauses at sentence boundaries.
+    return all.map(c => c.char).join('');
   }, [processedText]);
 
   const handlePlaySelected = () => {
