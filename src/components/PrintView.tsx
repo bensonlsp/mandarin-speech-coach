@@ -15,7 +15,6 @@ const TONE_PRINT_HEX: Record<Tone, string> = {
 
 interface PrintViewProps {
   processedText: ProcessedText | null;
-  appName: string;
 }
 
 function formatNow(d: Date): string {
@@ -23,7 +22,7 @@ function formatNow(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
-export function PrintView({ processedText, appName }: PrintViewProps) {
+export function PrintView({ processedText }: PrintViewProps) {
   const [printedAt, setPrintedAt] = useState('');
 
   useEffect(() => {
@@ -38,8 +37,6 @@ export function PrintView({ processedText, appName }: PrintViewProps) {
 
   return (
     <div className="print-view" aria-hidden="true">
-      <div className="print-header">{appName}</div>
-
       <div className="print-body">
         {processedText.map(para => (
           <div className="print-paragraph" key={para.paraIdx}>

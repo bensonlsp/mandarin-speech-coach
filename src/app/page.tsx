@@ -157,7 +157,7 @@ export default function Home() {
       )}
 
       {/* Hidden print view for PDF export */}
-      <PrintView processedText={processedText} appName={APP_NAME} />
+      <PrintView processedText={processedText} />
     </main>
   );
 }
